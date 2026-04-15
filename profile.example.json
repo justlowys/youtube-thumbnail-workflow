@@ -1,0 +1,10 @@
+{
+  "creator_name": "Your Name",
+  "channel_handle": "@yourhandle",
+  "face_description": "Describe yourself in detail so Gemini can match you. Example: young asian man, round youthful face, dark bowl-cut hair, round black wire-frame glasses, clean-shaven, early twenties. Another example: middle-aged white man with short brown beard, short brown hair, dark brown eyes, in his 30s.",
+  "brand_pictures_dir": "~/Downloads/Brand Pictures",
+  "default_outfit": "black t-shirt",
+  "default_accent_color": "blue",
+  "case_study_accent_color": "red",
+  "channel_description": "Optional: what your channel is about. Used to hint the script at relevant whiteboard content."
+}
