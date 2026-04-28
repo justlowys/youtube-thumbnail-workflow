@@ -1,21 +1,21 @@
 # YouTube Thumbnail SOP
 
-A complete, repeatable process for producing high-converting YouTube thumbnails using AI background generation + PIL text overlay. Hardened over 100+ real iterations on a published channel. Use this as the single source of truth for any thumbnail work.
+The complete step-by-step process for making a YouTube thumbnail with this repo. Use it as the single source of truth.
 
 ---
 
-## What this is
+## What you'll get
 
-A pipeline that turns the hardest parts of YouTube thumbnails into defaults, not guesses. You bring a video topic, a face, and a rough idea. The pipeline returns a 1920x1080 PNG ready to upload.
+You bring a video topic, a photo of yourself, and a style direction. The pipeline returns a 1920x1080 PNG ready to upload.
 
 **What it handles automatically:**
 
-- Strict face matching via Gemini 3 Pro Image Preview (Nano Banana Pro). Mouth closed unless source shows otherwise. Head large in frame (35-40% vertical). Pose taken from the source photo, never invented.
-- Real labels on whiteboards or graphic content. You pass a word list, the script tells Gemini to use only those words. No gibberish placeholders.
-- Single-banner headlines rendered by PIL with SF Pro Heavy at 78% frame width, upscaled to 1920x1080. Never Gemini-rendered text (Gemini hallucinates apostrophes, duplicates letters, mangles spacing).
-- Fazio-style case study format. Pulls a still from the actual interview video, crops letterbox, renders red money banner + white time-frame subheader.
+- **Face match.** The script feeds your real photo to Gemini and forces it to match — so the face on the thumbnail is recognisably you, with the right pose and mouth-closed by default.
+- **Real words on graphics.** You pass the labels, the script uses them. No misspelled gibberish in the background.
+- **Clean text overlay.** Bold, readable headline at the right size and position. Never garbled AI text.
+- **Case study thumbnails.** A separate command builds the two-faces-plus-money-banner format from a YouTube interview video.
 
-**Why it exists:** most thumbnail tools either over-promise AI magic (every output looks the same) or under-deliver (every judgment call left to you). This sits in the middle. Every default in here was validated against the rejection pile.
+**Why it exists:** most AI thumbnail tools over-promise (every output looks identical) or under-deliver (you still make every judgment call). This sits in the middle. The hard rules — fonts, banner colour, face positioning, label spelling — are baked in as defaults.
 
 ---
 
@@ -30,7 +30,7 @@ A pipeline that turns the hardest parts of YouTube thumbnails into defaults, not
 ### Install
 
 ```bash
-git clone https://github.com/<your-fork>/youtube-thumbnail-workflow.git
+git clone https://github.com/justlowys/youtube-thumbnail-workflow.git
 cd youtube-thumbnail-workflow
 pip install Pillow google-genai numpy
 brew install yt-dlp ffmpeg   # optional, only for case studies
@@ -60,7 +60,7 @@ mkdir -p ~/Pictures/Brand\ Pictures
 mkdir -p ~/Pictures/Reference\ Thumbnails
 ```
 
-You can use any path. The defaults in `profile.example.json` point at `~/Downloads/Brand Pictures`. Pick something stable and update your `profile.json` to match.
+You can use any path. The default in `profile.example.json` is `~/Pictures/Brand Pictures`. If you put your photos somewhere else, update `brand_pictures_dir` in `profile.json` to match.
 
 **Folder 1 — `Brand Pictures`** (5 to 15 photos of yourself)
 
@@ -219,9 +219,9 @@ Do not generate 4 variants by default. Pick the right concept from context, ship
 
 ---
 
-## Case study format (Fazio-style)
+## Case study format
 
-For client-win videos ("How [name] made $X in Y time"), the format is different. Two real faces side-by-side, money banner center-bottom. Modeled on Daniel Fazio's channel.
+For client-win videos ("How [name] made $X in Y time"), the format is different. Two real faces side-by-side, money banner center-bottom. The format that converts client-win videos in business / coaching / agency niches.
 
 ```bash
 python3 scripts/case_study.py \
@@ -293,7 +293,7 @@ Most feedback is vague. Translate it literally and change only the specific thin
 
 ## Dead ends. Do not repeat.
 
-Tried and rejected over 100+ iterations:
+These were tried and rejected. Save yourself the time:
 
 - **Insightface inswapper_128 face-swap.** Face always looks 70% you, never 100%. Hard quality ceiling.
 - **Landmark-based face paste from arbitrary source photo.** Hard edges, lighting mismatch.
@@ -395,6 +395,7 @@ Psychology gut check (the 3-step flow):
 youtube-thumbnail-workflow/
 ├── README.md
 ├── SOP.md                         # this document
+├── SKILL.md                       # for use as a Claude Code skill
 ├── profile.json                   # your config (gitignored)
 ├── profile.example.json
 ├── scripts/

@@ -1,48 +1,52 @@
 ---
 name: youtube-thumbnail
-description: Use when the user wants to create, revise, or iterate a YouTube thumbnail. Walks through transcript fetching, reference picking, Gemini background generation with strict face matching, and PIL text overlay. Hardened defaults from 100+ real iterations.
+description: Use when the user wants to create, revise, or iterate a YouTube thumbnail. Walks through reference picking, transcript fetching, Gemini background generation with strict face matching, and headline overlay. Bakes in design defaults so most decisions don't need to be made per thumbnail.
 ---
 
 # YouTube Thumbnail Skill
 
-Production-grade YouTube thumbnail pipeline. Generates 1920x1080 thumbnails using Gemini 3 Pro Image Preview (Nano Banana Pro) for the background and PIL for the text overlay. Bakes in validated design rules so most decisions are defaults, not judgment calls.
+Generates 1920x1080 YouTube thumbnails. The pipeline uses Gemini for the background (with strict face matching from the user's photo) and a separate text overlay step for the headline (so it never gets garbled). The user's profile lives in `profile.json`.
 
 ---
 
 ## STEP 0 — RUN THE SETUP CHECK FIRST
 
-Before generating anything, verify the user has completed setup. Run these checks in order. If any fail, stop and tell the user exactly which step to do, then refuse to continue until it's done.
+Before generating anything, verify the user has completed setup. The skill lives at `~/.claude/skills/<this-skill-folder>/`. Run these checks. If any line is printed by the script below, that's a blocking issue — stop, tell the user which step they're missing, point them at the relevant section of `README.md`, and don't proceed until they've fixed it.
 
 ```bash
-SKILL_ROOT="$(dirname "$(realpath SKILL.md 2>/dev/null || echo .)")"
-cd "$SKILL_ROOT" 2>/dev/null || true
+# Resolve skill root (works regardless of Claude's current working directory).
+# Replace <skill-folder> below with the actual folder name where this skill is installed
+# (default: youtube-thumbnail).
+SKILL_ROOT=~/.claude/skills/youtube-thumbnail
+[ -d "$SKILL_ROOT" ] || SKILL_ROOT="$(pwd)"
+cd "$SKILL_ROOT"
 
-# 1. Gemini API key
+# 1. Gemini API key (required)
 if ! grep -q "GEMINI_API_KEY=" .env 2>/dev/null && [ -z "$GEMINI_API_KEY" ]; then
-  echo "MISSING: GEMINI_API_KEY. Get one at https://aistudio.google.com/, then add to .env"
+  echo "MISSING: GEMINI_API_KEY. Get one at https://aistudio.google.com/, then add it to .env in $SKILL_ROOT"
 fi
 
-# 2. profile.json exists
+# 2. profile.json (required)
 if [ ! -f profile.json ]; then
-  echo "MISSING: profile.json. Run: cp profile.example.json profile.json — then edit it"
+  echo "MISSING: profile.json. Run: cd $SKILL_ROOT && cp profile.example.json profile.json — then edit it"
 fi
 
-# 3. brand_pictures_dir exists and has at least one image
-BRAND_DIR=$(python3 -c "import json,os; p=json.load(open('profile.json'));print(os.path.expanduser(p['brand_pictures_dir']))" 2>/dev/null)
-if [ -z "$BRAND_DIR" ] || [ ! -d "$BRAND_DIR" ]; then
-  echo "MISSING: Brand Pictures folder ($BRAND_DIR). Create it and add 5-15 headshots."
-elif [ -z "$(find "$BRAND_DIR" -maxdepth 1 -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' 2>/dev/null | head -1)" ]; then
-  echo "MISSING: photos in $BRAND_DIR. Add 5-15 headshots labeled by expression (e.g. '01 neutral.jpg')."
+# 3. Brand Pictures folder (required)
+if [ -f profile.json ]; then
+  BRAND_DIR=$(python3 -c "import json,os; p=json.load(open('profile.json'));print(os.path.expanduser(p['brand_pictures_dir']))" 2>/dev/null)
+  if [ -z "$BRAND_DIR" ] || [ ! -d "$BRAND_DIR" ]; then
+    echo "MISSING: Brand Pictures folder ($BRAND_DIR). Create it and add 5-15 headshots."
+  elif [ -z "$(find "$BRAND_DIR" -maxdepth 1 -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' 2>/dev/null | head -1)" ]; then
+    echo "MISSING: photos in $BRAND_DIR. Add 5-15 headshots labeled by expression (e.g. '01 neutral-slight-smile.jpg')."
+  fi
 fi
 
-# 4. Python deps
+# 4. Python deps (required)
 python3 -c "import PIL, google.genai, numpy" 2>/dev/null || \
   echo "MISSING: Python deps. Run: pip install Pillow google-genai numpy"
 ```
 
-Any line printed = blocking issue. Tell the user to fix it, point them at the relevant section of `README.md`, and stop. Do NOT try to "work around" missing setup. The pipeline will fail without it.
-
-If all checks pass silently, proceed.
+If all checks pass silently, proceed. Do NOT try to "work around" missing setup — the pipeline will fail without it.
 
 ---
 
@@ -104,7 +108,7 @@ The script automatically:
 - Forces face constraints (mouth closed unless source shows otherwise, face large 35-40% of vertical height, pose from source)
 - Tells Gemini "no text" so the headline can be overlaid in PIL
 
-### Step 5 — Overlay the headline in PIL
+### Step 5 — Overlay the headline
 
 ```bash
 python3 scripts/overlay_text.py \
@@ -113,9 +117,9 @@ python3 scripts/overlay_text.py \
   --output workspace/thumb-final.png
 ```
 
-Defaults: SF Pro Heavy, single solid coloured banner (user's `default_accent_color`), white text inside, 78% frame width, y=0.78, LANCZOS upscale to 1920x1080 + UnsharpMask.
+Defaults: SF Pro Heavy weight, single solid coloured banner (the user's `default_accent_color`), white text inside, 78% frame width, positioned around the lower third. Final output upscaled to 1920x1080.
 
-NEVER let Gemini render the headline. It hallucinates apostrophes, duplicates letters, mangles spacing. Always overlay in PIL.
+NEVER let Gemini render the headline. It hallucinates apostrophes, duplicates letters, mangles spacing. Always use the overlay script.
 
 ### Step 6 — Or run end-to-end
 
@@ -137,7 +141,7 @@ Show the user the final image. Don't ship 4 variants by default — pick the rig
 
 ---
 
-## Case study format (Fazio-style)
+## Case study format
 
 For client-win videos ("How [name] made $X in Y time"):
 
@@ -185,36 +189,36 @@ When the user gives feedback, translate literally. Change ONLY the specific thin
 
 ## Hard rules (the design system)
 
-- **Single solid banner headline.** Not two split colours. (Case study is the exception.)
-- **SF Pro Heavy.** Bold is too thin. Black is too heavy.
-- **Real correctly-spelled words on whiteboards.** Pass via `--labels`. Never let Gemini invent.
-- **Face large.** 35-40% vertical height, y=15-55%.
-- **Mouth closed by default.** Open only if source photo shows it open.
+- **Single solid colour banner behind the headline.** Not two split colours. (Case study is the exception.)
+- **SF Pro Heavy weight on the headline.** Bold is too thin. Black is too heavy.
+- **Real, correctly-spelled words on whiteboards.** Pass via `--labels`. Never let Gemini invent.
+- **Face large in frame.** Roughly 35-40% of vertical height.
+- **Mouth closed by default.** Open only if the source photo shows it open.
 - **Pose matches the source brand picture.** Don't ask Gemini to invent a new pose.
-- **Always upscale to 1920x1080.** LANCZOS + UnsharpMask.
-- **PIL overlay for all text.** Never Gemini-rendered headlines.
+- **Final output is always 1920x1080.** The overlay script handles the upscale.
+- **All headline text added by the overlay script.** Never let Gemini render headlines.
 - **Case studies use real interview stills only.** Never Gemini-generated client faces.
-- **Headline complements the title, never repeats it.** Title = WHAT. Thumbnail = FEELING.
-- **Maximum 3 distinct visual elements.** More than that = unreadable on mobile.
-- **Bottom-right stays clear.** YouTube's timestamp overlay covers it.
+- **Headline complements the video title, never repeats it.** Title = WHAT. Thumbnail = FEELING.
+- **Maximum 3 distinct visual elements.** More than that becomes unreadable on mobile.
+- **Bottom-right stays clear.** YouTube's video timestamp overlay covers it.
 
 ---
 
 ## Dead ends — DO NOT REPEAT
 
-These were tried and rejected over 100+ iterations:
+These were tried and rejected. Save the user the time:
 
-- Insightface inswapper_128 face-swap — face always looks 70% them, never 100%
-- Landmark-based face paste — hard edges, lighting mismatch
-- PIL composite from scratch (cutout + new bg) — looks thin, generic
-- Gemini-rendered text — always hallucinates
-- White drop shadows on white backgrounds — creates haloes
-- Dark offset shadows on white backgrounds — looks muddy
+- Face-swap models (insightface inswapper_128 etc.) — the face always looks 70% them, never 100%
+- Landmark-based face paste from arbitrary source photo — hard edges, lighting mismatch
+- Compositing the face on top of a new background from scratch — looks thin, generic
+- Gemini-rendered headline text — always hallucinates apostrophes and spacing
+- White drop shadows on bright backgrounds — creates visible haloes
+- Dark offset shadows on bright backgrounds — looks muddy
 - Heavy black strokes around text — looks blocky
-- SF Pro Bold (too thin) or SF Pro Black (too heavy) — Heavy only
-- Phone selfies, dim shots, gaming-chair-LED shots as source photos
-- Forcing smiles when the source photo doesn't smile
-- Generic hook text not tied to the transcript
+- SF Pro Bold (too thin) or SF Pro Black (too heavy) — Heavy is the only correct weight
+- Phone selfies, dim room shots, photos with weird LED lighting as source photos
+- Forcing a smile when the source photo doesn't smile — never works
+- Generic hook text not tied to the actual video transcript
 - Shipping 4 variants by default when the right concept is obvious from context
 
 ---

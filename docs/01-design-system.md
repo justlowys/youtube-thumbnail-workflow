@@ -24,7 +24,7 @@ These are the hard rules. Every one was validated by a rejection. Break them at 
 
 ### Case study exception
 
-For Fazio-style case study thumbnails:
+For case study thumbnails (the two-faces-plus-money-banner format):
 - Red `(220, 30, 30)` main banner with white text for the money amount
 - White sub-banner directly below with black text for the time-frame
 - Drop shadows allowed on both (they're separate banners, shadows create depth not haloes)
@@ -49,7 +49,7 @@ The words should come from the video's actual transcript or a fixed list of your
 ## Output resolution
 
 - **Always upscale to 1920x1080** with LANCZOS resize + UnsharpMask filter.
-- Gemini Nano Banana Pro outputs 1376x768 natively. YouTube wants HD minimum. Anything smaller reads as low-production.
+- Gemini outputs roughly 1376x768 natively. YouTube wants HD minimum. Anything smaller reads as low-production.
 - `img.resize((1920, 1080), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=1.5, percent=120, threshold=2))`
 
 ## File organization

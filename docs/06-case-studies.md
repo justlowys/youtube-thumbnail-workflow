@@ -1,6 +1,6 @@
 # 06 — Case Study Format
 
-Client-win videos deserve their own format. This is Daniel Fazio's case study pattern — validated across millions of views on the Daniel Fazio / Client Ascension channel — packaged into `scripts/case_study.py`.
+Client-win videos deserve their own thumbnail format. This is the two-faces-plus-money-banner pattern that has become the industry standard for business, coaching, and agency case study videos. Packaged into `scripts/case_study.py`.
 
 ## Why case studies are different
 
@@ -11,12 +11,12 @@ This flips the design:
 - Regular thumbnail: face + teaser + curiosity gap
 - Case study thumbnail: two faces + money number + time frame + no gap
 
-## The Fazio formula
+## The formula
 
-Look at any Daniel Fazio client interview thumbnail. They all follow the same pattern:
+The pattern that works for case study thumbnails:
 
 1. **Two real faces** side-by-side. Left half is one person (usually the creator), right half is the client. Both approximately equal scale, head + shoulders.
-2. **Natural backgrounds** — whatever each person was shot on (home office, gaming chair, bookshelf). The backgrounds intentionally don't match, which is part of the authenticity.
+2. **Natural backgrounds** — whatever each person was shot on (home office, gaming chair, bookshelf). The backgrounds intentionally don't match. The asymmetry IS the authenticity.
 3. **Money banner dead centre bottom** — `$XX,XXX/MO` in a bold red rectangle with white text.
 4. **Time-frame sub-banner directly below** — `IN X MONTHS` or `IN X DAYS` in a white rectangle with black text.
 5. **Drop shadows** on both banners (creates depth, not haloes, because the banners are opaque).
@@ -31,7 +31,7 @@ That's it. No headline text on top. No extra graphics. No "CASE STUDY:" prefix (
 - **Authenticity** — real interview stills are always more credible than Gemini-generated faces
 - **Fast comprehension** — 3 elements max, readable at 1/16th size on mobile
 - **Trust signals** — the two faces plus real backgrounds create social proof without screaming "testimonial"
-- **Competitive mimicry** — this format is now the industry standard for client wins, so viewers recognize it instantly as a case study
+- **Recognisable format** — viewers in business / coaching / agency niches now recognise this pattern instantly as a case study
 
 ## How to build one
 
@@ -50,8 +50,8 @@ The script:
 2. Extracts a still frame at `--frame-time` seconds
 3. Automatically detects and crops letterbox bars (top/bottom black bars)
 4. Resizes to 1920x1080
-5. Overlays the red money banner + white time-frame sub-banner
-6. Applies drop shadows + unsharp mask
+5. Adds the red money banner + white time-frame sub-banner
+6. Applies drop shadows + sharpening
 7. Saves
 
 ## Picking the right frame
@@ -73,28 +73,28 @@ Start with `--frame-time 60` and step through in 30-second increments.
 
 ## Format rules
 
-- **Money format**: include `/MO` for MRR figures, `/YR` for annual, or no suffix for one-time amounts. Always use a comma in numbers over 1000. Always prefix with `$`.
+- **Money format**: include `/MO` for monthly recurring revenue, `/YR` for annual, or no suffix for one-time amounts. Always use a comma in numbers over 1000. Always prefix with `$`.
 - **Time frame**: be specific. "IN 30 DAYS", "IN 5 MONTHS", "IN 2 WEEKS". Not "FAST" or "QUICKLY".
 - **Banner y-position**: default `--y-pos 0.72` works for most 16:9 interview stills. Move to 0.76 if the faces are cut off or 0.68 if there's too much headroom.
 
 ## What NOT to do
 
-- **Don't generate client faces with Gemini.** You'll ship an obvious deepfake-looking thumbnail that destroys trust. Always use interview stills.
-- **Don't use blue as the money banner colour.** Red is the industry standard. Changing to blue makes the thumbnail look like a generic business video, not a case study.
+- **Don't generate the client's face with Gemini.** You'll ship an obvious deepfake-looking thumbnail that destroys trust. Always use real interview stills.
+- **Don't use blue as the money banner colour.** Red is the format standard. Changing to blue makes the thumbnail look like a generic business video, not a case study.
 - **Don't add "CASE STUDY:" as a headline.** The format IS the signal.
 - **Don't add extra graphics** (funnels, arrows, icons). Minimalism is part of the credibility.
 - **Don't use stock photos** for missing faces. If you can't get a real interview still, skip this format entirely.
 
 ## When NOT to use this format
 
-- **For educational / strategy videos.** Use `dense-whiteboard` or similar. The Fazio format is wasted on a framework explainer.
+- **For educational / strategy videos.** Use `dense-whiteboard` or similar. The case study format is wasted on a framework explainer.
 - **For personal lessons.** Use `cinematic-quote`.
 - **For comparison videos.** Use `split-cold-warm`.
 - **If you only have one face.** The two-face split is load-bearing. A solo case study should use a regular asymmetrical layout with a proof screenshot (Stripe dashboard, PayPal, bank balance).
 
 ## The two-face test
 
-Before shipping a Fazio-style thumbnail, verify:
+Before shipping a case study thumbnail, verify:
 
 1. Are both faces recognizable at 1/16th size on mobile?
 2. Is the money number readable without zooming?

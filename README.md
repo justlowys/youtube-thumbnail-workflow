@@ -1,22 +1,18 @@
 # YouTube Thumbnail Workflow
 
-> A production-grade thumbnail pipeline. One command turns a video topic, a face photo, and a style reference into a finished 1920x1080 thumbnail. Hardened over 100+ real iterations on a published channel.
+> Generate finished 1920x1080 YouTube thumbnails in one command. Bring a video topic, a photo of yourself, and a style direction. Get back a thumbnail ready to upload.
 
-## What this is
+## What it does for you
 
-A set of Python scripts + a documented design system that turn the hardest parts of YouTube thumbnails into defaults instead of guesses.
+- **Your face actually looks like you.** No AI face-swap weirdness. The pipeline feeds your real photo and forces a match, so the person in the thumbnail is recognisably you.
+- **Real, correctly-spelled words on graphics.** No background gibberish. You pass the labels, the script uses them.
+- **Clean text overlays.** Bold readable headlines, sized to read on mobile. Never garbled AI text.
+- **Case study format built in.** Two faces side-by-side with a money banner and time-frame. The format that converts client-win videos.
+- **Set-once profile.** Your face description, accent colour, and headshot folder live in one file. Reused on every thumbnail you make.
 
-**What it handles for you:**
+## Why it exists
 
-- Strict face matching via Gemini 3 Pro Image Preview (Nano Banana Pro). Mouth closed unless source shows otherwise. Head large in frame. Pose taken from the source photo, never invented.
-- Real labels on whiteboards or graphic content. You pass a word list, the script tells Gemini to use only those words. No gibberish placeholders.
-- Single-banner headlines rendered by PIL with SF Pro Heavy at 78% frame width, upscaled to 1920x1080. Never Gemini-rendered text (it hallucinates apostrophes, duplicates letters, mangles spacing).
-- Fazio-style case study format. Pulls a still from the actual interview video, crops letterbox, renders the red money banner + white time-frame subheader.
-- Configurable creator profile. Your face description, headshot folder, and default accent colour live in one `profile.json`.
-
-**Why it exists:** most thumbnail tools either over-promise AI magic (every output looks the same) or under-deliver (every judgment call left to you). This sits in the middle. Every default in here was validated against the rejection pile.
-
-Credit: original architecture forked from [Tyler Germain's youtube-thumbnail skill](https://fridaylabs.com) at Friday Labs. This version hardens that foundation with validated design-system rules.
+Most AI thumbnail tools over-promise (every output looks the same) or under-deliver (you still make every judgment call). This sits in the middle. The hard rules — fonts, banner colour, face positioning, label spelling — are baked in as defaults so you stop guessing.
 
 ---
 
@@ -26,9 +22,9 @@ The pipeline will not run until all 5 of these are done. Do them in order.
 
 - [ ] **1. Install dependencies** (Python 3.10+, Pillow, google-genai, numpy)
 - [ ] **2. Get a Gemini API key** and put it in `.env`
-- [ ] **3. Create your `Brand Pictures` folder** with 5 to 15 headshots
-- [ ] **4. Create your `Reference Thumbnails` folder** with style references you'd happily clone
-- [ ] **5. Copy `profile.example.json` to `profile.json`** and fill in your face description
+- [ ] **3. Create your `Brand Pictures` folder** with 5 to 15 headshots of yourself
+- [ ] **4. Copy `profile.example.json` to `profile.json`** and fill in your face description
+- [ ] **5. (Optional but recommended) Create a `Reference Thumbnails` folder** with style references you'd happily clone
 
 Each step is detailed below.
 
@@ -39,7 +35,7 @@ Each step is detailed below.
 ### 1. Install
 
 ```bash
-git clone https://github.com/<your-fork>/youtube-thumbnail-workflow.git
+git clone https://github.com/justlowys/youtube-thumbnail-workflow.git
 cd youtube-thumbnail-workflow
 pip install Pillow google-genai numpy
 # optional: only for case study video frame extraction
@@ -87,21 +83,7 @@ This folder is the source of truth. If a photo is in here, the pipeline assumes 
 
 You can use any path. Update `brand_pictures_dir` in `profile.json` if you put it somewhere other than `~/Pictures/Brand Pictures`.
 
-### 4. Create your `Reference Thumbnails` folder
-
-```bash
-mkdir -p ~/Pictures/Reference\ Thumbnails
-```
-
-Save **10 to 50 reference thumbnails** you'd happily clone the style of. Right-click → Save Image from YouTube. Sources to mine:
-
-- Top creators in your niche (highest view-count videos)
-- Creators in adjacent niches whose style you admire
-- Specific formats you want to replicate (whiteboard explainer, money banner, split before/after, burning paper, etc.)
-
-When picking a reference for a new thumbnail, scan visually. Filenames are meaningless. Open the folder and look at the actual images. Pick the one whose composition matches the message of the new video.
-
-### 5. Configure your profile
+### 4. Configure your profile
 
 ```bash
 cp profile.example.json profile.json
@@ -130,6 +112,22 @@ The `face_description` is the most important field. Bad descriptions make Gemini
 
 `profile.json` is gitignored. Yours stays local.
 
+### 5. (Optional) Create a `Reference Thumbnails` folder
+
+The pipeline runs without this, but having a folder of saved style references makes it much faster to pick a direction for each new thumbnail.
+
+```bash
+mkdir -p ~/Pictures/Reference\ Thumbnails
+```
+
+Save **10 to 50 reference thumbnails** you'd happily clone the style of. Right-click → Save Image from YouTube. Sources to mine:
+
+- Top creators in your niche (highest view-count videos)
+- Creators in adjacent niches whose style you admire
+- Specific formats you want to replicate (whiteboard explainer, money banner, split before/after, burning paper)
+
+When picking a reference for a new thumbnail, open the folder and look at the actual images. Filenames are meaningless. Pick the one whose composition matches the message of the new video.
+
 ---
 
 ## Generate your first thumbnail
@@ -149,10 +147,10 @@ Done. You have a 1920x1080 thumbnail.
 
 | Script | Purpose |
 |---|---|
-| `generate_bg.py` | Generate a Gemini background with face + style constraints applied |
-| `overlay_text.py` | PIL headline overlay with the winning formula defaults |
-| `case_study.py` | Fazio-style case study builder (video frame + money banner) |
-| `thumbnail.py` | End-to-end orchestrator (bg gen + overlay in one call) |
+| `generate_bg.py` | Generate a thumbnail background with your face and chosen style |
+| `overlay_text.py` | Add the headline text on top of the generated background |
+| `case_study.py` | Build a case study thumbnail from a YouTube interview video |
+| `thumbnail.py` | One-shot end-to-end: background + text in a single command |
 
 Each script has `--help` with full flags.
 
@@ -166,7 +164,7 @@ Each script has `--help` with full flags.
 | `split-cold-warm` | Comparison / before-after / this-vs-that videos |
 | `clean-portrait` | PFPs, simple hook videos, clean brand shots |
 
-## Case studies (Fazio format)
+## Case study thumbnails
 
 For client-win videos ("How X made $Y in Z time"):
 
@@ -179,7 +177,7 @@ python3 scripts/case_study.py \
   --output out/case-study.png
 ```
 
-Downloads the video, extracts a still showing both faces from the interview, crops letterbox, renders the red/white money banner. Uses real interview stills so both faces are 100% authentic (Gemini never generates client faces). See [docs/06-case-studies.md](./docs/06-case-studies.md) for why this format converts.
+Downloads the video, extracts a still showing both faces from the interview, crops the black bars, and adds the red money banner. Uses real interview stills so both faces are authentic — Gemini never generates the client's face. See [docs/06-case-studies.md](./docs/06-case-studies.md) for why this format converts.
 
 ## Documentation
 
@@ -191,23 +189,23 @@ The full SOP and design system live in this repo:
 - [docs/03-desire-loops.md](./docs/03-desire-loops.md) — how to frame what the thumbnail promises
 - [docs/04-composition.md](./docs/04-composition.md) — symmetrical, rule-of-thirds, A→B split
 - [docs/05-iteration-process.md](./docs/05-iteration-process.md) — how to iterate fast + the feedback translation table
-- [docs/06-case-studies.md](./docs/06-case-studies.md) — the Fazio format, why it converts, when to use it
+- [docs/06-case-studies.md](./docs/06-case-studies.md) — the case study format, why it converts, when to use it
 
 ## Hard rules (the short version)
 
-- Single solid banner headline, not two split colours (case study is the exception)
-- SF Pro Heavy weight (between Bold and Black)
-- Real correctly-spelled words on any whiteboard or graphic content. Never let Gemini invent labels.
-- Face large: 35-40% of vertical height, y=15-55%
+- Single solid colour banner behind the headline, not two split colours (case study is the exception)
+- SF Pro Heavy weight on the headline (between Bold and Black — the sweet spot)
+- Real, correctly-spelled words on any whiteboard or graphic. Never let Gemini invent labels.
+- Face large in frame: takes up roughly 35-40% of vertical height
 - Mouth closed unless the source photo shows otherwise
 - Pose matches the source brand picture, don't force a new pose
-- PIL overlay for all text, never Gemini-rendered headlines
-- Upscale to 1920x1080 with LANCZOS + UnsharpMask
-- For case studies: use interview stills, never Gemini-generated faces
+- All headline text added by the overlay script, never typed by Gemini
+- Final output is always 1920x1080 (HD)
+- Case study thumbnails use real interview stills, never Gemini-generated client faces
 
 ## Iteration translation table
 
-When your collaborator says X, change Y:
+When you (or someone reviewing the thumbnail) gives feedback, translate it literally and change only the specific thing:
 
 | User says | Fix |
 |---|---|
@@ -224,13 +222,16 @@ When your collaborator says X, change Y:
 
 ## Use as a Claude Code skill
 
-This repo doubles as a Claude Code skill. To install:
+This repo doubles as a [Claude Code](https://claude.com/claude-code) skill. To install, copy the entire repo folder into your Claude skills directory:
 
 ```bash
+# from inside the cloned repo
 cp -r . ~/.claude/skills/youtube-thumbnail/
 ```
 
-Then type `/youtube-thumbnail` in Claude Code. Claude reads `SKILL.md` and walks you through the pipeline using the same scripts.
+Then in Claude Code type `/youtube-thumbnail`. Claude reads `SKILL.md` and walks you through the pipeline conversationally, using the same scripts.
+
+If you already have a skill named `youtube-thumbnail`, copy to a different folder name (e.g. `~/.claude/skills/yt-thumb/`) and the slash command becomes `/yt-thumb`.
 
 ## License
 

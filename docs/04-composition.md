@@ -36,7 +36,7 @@ The "gold standard" pose for this layout: the subject's hand or finger points to
 Vertical split down the middle. Two distinct states, faces, or concepts on either side. The split itself is the visual element.
 
 - **When to use**: comparison videos ("warm vs cold"), case studies (before/after), contrast videos ("wrong vs right")
-- **Styles that use it**: `split-cold-warm`, Fazio-style case studies
+- **Styles that use it**: `split-cold-warm`, case study thumbnails
 - **Stun gun combo**: colour contrast (left red, right blue) + large face(s) + big text at the join
 - **Common mistake**: making the two sides too visually similar so the split loses impact
 

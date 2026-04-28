@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fazio-style case study thumbnail.
+"""Case study thumbnail (two-faces-plus-money-banner format).
 
 Downloads a YouTube video, extracts a still frame with both faces, crops grey
 bars, and overlays the red/white money banner + time-frame subheader.
