@@ -66,7 +66,7 @@ def remove_letterbox(img):
 
 
 def render(args):
-    tmp = Path("/tmp/justscale_case_study")
+    tmp = Path("/tmp/thumbnail_case_study")
     video_path = download_video(args.video_id, tmp)
     frame_path = tmp / f"{args.video_id}_{args.frame_time}.jpg"
     extract_frame(video_path, args.frame_time, frame_path)

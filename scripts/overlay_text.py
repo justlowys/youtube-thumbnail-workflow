@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Overlay the JustScale winning-formula headline on a generated background.
+"""Overlay the winning-formula headline on a generated background.
 
 Defaults: SF Pro Heavy, single solid blue banner (0, 102, 255), white text,
 78% frame width, y=0.78, LANCZOS upscale to 1920x1080 + UnsharpMask.

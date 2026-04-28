@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end JustScale thumbnail orchestrator.
+"""End-to-end thumbnail orchestrator.
 
 Wraps generate_bg.py and overlay_text.py into a single call. Given a video ID,
 brand pic, style, and headline, produces the finished 1920x1080 thumbnail.
@@ -43,15 +43,12 @@ def load_dotenv():
 
 
 def fetch_transcript(video_id):
-    """Try to pull the transcript via Supadata. Returns text or None."""
-    env_file = Path.home() / "Documents" / "mission-control" / ".env.local"
-    if not env_file.exists():
-        return None
-    key = None
-    for line in env_file.read_text().splitlines():
-        if line.startswith("SUPADATA_API_KEY="):
-            key = line.split("=", 1)[1].strip()
-            break
+    """Try to pull the transcript via Supadata. Returns text or None.
+
+    Reads SUPADATA_API_KEY from the standard env locations (loaded by
+    load_dotenv earlier). If the key isn't set, transcript fetch is skipped.
+    """
+    key = os.environ.get("SUPADATA_API_KEY")
     if not key:
         return None
     try:
@@ -80,7 +77,7 @@ def run_script(name, args):
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="End-to-end JustScale thumbnail builder")
+    p = argparse.ArgumentParser(description="End-to-end thumbnail builder")
     p.add_argument("--video-id", help="YouTube video ID — used to print transcript pillars")
     p.add_argument("--brand-pic", required=True, help="Brand picture name prefix")
     p.add_argument("--style", required=True,

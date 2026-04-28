@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a Gemini background for a JustScale thumbnail.
+"""Generate a Gemini background for a thumbnail.
 
 Bakes in the strict face constraints (mouth closed, face large, pose from
 source) and style presets so callers only specify the high-level intent.
@@ -201,7 +201,7 @@ def build_prompt(args):
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Generate a JustScale thumbnail background via Gemini")
+    p = argparse.ArgumentParser(description="Generate a thumbnail background via Gemini")
     p.add_argument("--brand-pic", required=True,
                    help="Brand picture name prefix (e.g. '16 smile-both-hands' or 'smile-both')")
     p.add_argument("--style", required=True, choices=list(STYLE_TEMPLATES.keys()),

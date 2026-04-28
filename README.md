@@ -1,8 +1,6 @@
 # YouTube Thumbnail Workflow
 
-> A production-grade thumbnail pipeline hardened over 100+ real iterations on a YouTube channel. Turns strategy videos, case studies, and personal brand thumbnails into finished 1920x1080 outputs with one command.
-
-![blueprint example](./examples/blueprint.png)
+> A production-grade thumbnail pipeline. One command turns a video topic, a face photo, and a style reference into a finished 1920x1080 thumbnail. Hardened over 100+ real iterations on a published channel.
 
 ## What this is
 
@@ -10,65 +8,70 @@ A set of Python scripts + a documented design system that turn the hardest parts
 
 **What it handles for you:**
 
-- Strict face matching via Gemini 3 Pro Image Preview (Nano Banana Pro). Mouth closed unless source shows otherwise, head large (35-40% vertical), pose matches your source photo, face never hallucinated.
-- Real labels on any whiteboard or graphic content. You pass a word list, the script tells Gemini to use only those words. No gibberish placeholders.
-- Single-banner headlines rendered by PIL with SF Pro Heavy, 78% frame width, 1920x1080 upscale. Never Gemini-rendered text (Gemini hallucinates apostrophes, duplicates letters, mangles spacing).
-- Fazio-style case study format. Pulls a still from the actual interview video, crops letterbox, renders red money banner + white time-frame subheader.
-- Configurable creator profile. Your face description, brand picture folder, and default accent colour live in one `profile.json`.
+- Strict face matching via Gemini 3 Pro Image Preview (Nano Banana Pro). Mouth closed unless source shows otherwise. Head large in frame. Pose taken from the source photo, never invented.
+- Real labels on whiteboards or graphic content. You pass a word list, the script tells Gemini to use only those words. No gibberish placeholders.
+- Single-banner headlines rendered by PIL with SF Pro Heavy at 78% frame width, upscaled to 1920x1080. Never Gemini-rendered text (it hallucinates apostrophes, duplicates letters, mangles spacing).
+- Fazio-style case study format. Pulls a still from the actual interview video, crops letterbox, renders the red money banner + white time-frame subheader.
+- Configurable creator profile. Your face description, headshot folder, and default accent colour live in one `profile.json`.
 
-**Why it exists:**
+**Why it exists:** most thumbnail tools either over-promise AI magic (every output looks the same) or under-deliver (every judgment call left to you). This sits in the middle. Every default in here was validated against the rejection pile.
 
-Most thumbnail tools either over-promise AI magic (every thumbnail looks the same) or under-deliver (leave every judgment call to the user). This project sits in the middle. It bakes in every hard-learned rule from hundreds of real rejections into the default behaviour, so you stop re-deriving them per project. The strategy chapters in `docs/` explain why every rule exists.
+Credit: original architecture forked from [Tyler Germain's youtube-thumbnail skill](https://fridaylabs.com) at Friday Labs. This version hardens that foundation with validated design-system rules.
 
-Credit: architecture forked from [Tyler Germain's youtube-thumbnail skill](https://fridaylabs.com) at Friday Labs. This version hardens Tyler's foundation with validated design-system rules.
+---
 
-## Quick start
+## Before you can use this — checklist
 
-### 1. Clone and install
+The pipeline will not run until all 5 of these are done. Do them in order.
+
+- [ ] **1. Install dependencies** (Python 3.10+, Pillow, google-genai, numpy)
+- [ ] **2. Get a Gemini API key** and put it in `.env`
+- [ ] **3. Create your `Brand Pictures` folder** with 5 to 15 headshots
+- [ ] **4. Create your `Reference Thumbnails` folder** with style references you'd happily clone
+- [ ] **5. Copy `profile.example.json` to `profile.json`** and fill in your face description
+
+Each step is detailed below.
+
+---
+
+## Setup
+
+### 1. Install
 
 ```bash
-git clone https://github.com/justlowys/youtube-thumbnail-workflow.git
+git clone https://github.com/<your-fork>/youtube-thumbnail-workflow.git
 cd youtube-thumbnail-workflow
 pip install Pillow google-genai numpy
-# optional: for case study video frame extraction
+# optional: only for case study video frame extraction
 brew install yt-dlp ffmpeg
 ```
 
-### 2. Set your Gemini API key
+> **macOS only by default.** The PIL overlay script uses `/System/Library/Fonts/SFNS.ttf`. On Linux, install SF Pro or substitute another Heavy-weight sans-serif and update the font path in `scripts/overlay_text.py`.
 
-Put it in `~/.claude/.env` or any `.env` in the project root:
+### 2. API keys
+
+Create `.env` in the project root:
 
 ```
 GEMINI_API_KEY=your-key-here
-# optional, for auto-transcript fetching in the orchestrator:
-SUPADATA_API_KEY=your-key-here
+SUPADATA_API_KEY=your-key-here   # optional, for auto-transcript fetching
 ```
 
-### 3. Configure your profile
+Get a Gemini key at https://aistudio.google.com/. Supadata is optional but recommended.
+
+### 3. Create your `Brand Pictures` folder
+
+This is your curated face library. The Gemini script picks one photo per generation and uses it as the face reference. Quality of these photos determines quality of every thumbnail.
 
 ```bash
-cp profile.example.json profile.json
+mkdir -p ~/Pictures/Brand\ Pictures
 ```
 
-Edit `profile.json` to describe your face and point at your headshot folder:
+Drop **5 to 15 photos of yourself** into the folder. Rules:
 
-```json
-{
-  "creator_name": "Your Name",
-  "channel_handle": "@yourhandle",
-  "face_description": "young asian man, round youthful face, dark bowl-cut hair, round black wire-frame glasses, clean-shaven, early twenties",
-  "brand_pictures_dir": "~/Downloads/Brand Pictures",
-  "default_outfit": "black t-shirt",
-  "default_accent_color": "blue",
-  "case_study_accent_color": "red"
-}
-```
-
-Write the `face_description` as if you were describing yourself to a stranger at a party. Hair, glasses, facial hair, approximate age, skin tone. Specific > generic.
-
-### 4. Add your headshots
-
-Drop 5-15 photos of yourself into `brand_pictures_dir`. Name each file with a short expression label:
+- Studio or well-lit photos only. No phone selfies, no dim room shots.
+- Mix of expressions across the set: neutral, slight smile, serious, shocked, explaining, pointing, both hands raised.
+- Name each file with a short expression label so you can pick by intent later:
 
 ```
 01 neutral-slight-smile.jpg
@@ -80,9 +83,56 @@ Drop 5-15 photos of yourself into `brand_pictures_dir`. Name each file with a sh
 14 smile-neutral.jpg
 ```
 
-Mix of expressions: neutral, slight smile, serious, shocked, explaining, pointing, both hands raised. These become the face references the Gemini script picks from.
+This folder is the source of truth. If a photo is in here, the pipeline assumes it's approved. Remove anything you don't want appearing on a thumbnail.
 
-### 5. Generate your first thumbnail
+You can use any path. Update `brand_pictures_dir` in `profile.json` if you put it somewhere other than `~/Pictures/Brand Pictures`.
+
+### 4. Create your `Reference Thumbnails` folder
+
+```bash
+mkdir -p ~/Pictures/Reference\ Thumbnails
+```
+
+Save **10 to 50 reference thumbnails** you'd happily clone the style of. Right-click → Save Image from YouTube. Sources to mine:
+
+- Top creators in your niche (highest view-count videos)
+- Creators in adjacent niches whose style you admire
+- Specific formats you want to replicate (whiteboard explainer, money banner, split before/after, burning paper, etc.)
+
+When picking a reference for a new thumbnail, scan visually. Filenames are meaningless. Open the folder and look at the actual images. Pick the one whose composition matches the message of the new video.
+
+### 5. Configure your profile
+
+```bash
+cp profile.example.json profile.json
+```
+
+Edit `profile.json`:
+
+```json
+{
+  "creator_name": "Your Name",
+  "channel_handle": "@yourhandle",
+  "face_description": "describe yourself the way you'd describe a stranger at a party. Include: age range, ethnicity, face shape, hair colour and style, glasses, facial hair, distinctive features. Specific beats generic.",
+  "brand_pictures_dir": "~/Pictures/Brand Pictures",
+  "default_outfit": "black t-shirt",
+  "default_accent_color": "blue",
+  "case_study_accent_color": "red",
+  "channel_description": "optional: 1 sentence about what your channel covers"
+}
+```
+
+The `face_description` is the most important field. Bad descriptions make Gemini hallucinate features. Good descriptions make the face look like you 90% of the time. Examples that work:
+
+- "young asian man, round youthful face, dark bowl-cut hair, round black wire-frame glasses, clean-shaven, early twenties"
+- "middle-aged white man with short brown beard, short brown hair, dark brown eyes, mid-thirties"
+- "black woman in her late twenties, natural curly hair pulled back, brown eyes, no glasses, full lips, warm brown skin"
+
+`profile.json` is gitignored. Yours stays local.
+
+---
+
+## Generate your first thumbnail
 
 ```bash
 python3 scripts/thumbnail.py \
@@ -122,39 +172,38 @@ For client-win videos ("How X made $Y in Z time"):
 
 ```bash
 python3 scripts/case_study.py \
-  --video-id kDxl9sGOwqU \
+  --video-id <video-id> \
   --amount '$17,259/MO' \
   --timeframe "IN 30 DAYS" \
   --frame-time 60 \
   --output out/case-study.png
 ```
 
-Downloads the video, extracts a still with both faces from the interview, crops letterbox, renders the red/white money banner. Uses real interview stills so both faces are 100% authentic (Gemini never generates client faces). See [docs/06-case-studies.md](./docs/06-case-studies.md) for why this format converts.
+Downloads the video, extracts a still showing both faces from the interview, crops letterbox, renders the red/white money banner. Uses real interview stills so both faces are 100% authentic (Gemini never generates client faces). See [docs/06-case-studies.md](./docs/06-case-studies.md) for why this format converts.
 
-![case study example](./examples/case-study.png)
+## Documentation
 
-## The design system (read this)
+The full SOP and design system live in this repo:
 
-The `docs/` folder contains the strategy chapters. If you only read one, read `docs/01-design-system.md` — it's the hard rules distilled. The rest explain WHY each rule exists:
-
-- [01 Design System](./docs/01-design-system.md) — the hard rules (fonts, banners, face, labels, upscale)
-- [02 Viewer Psychology](./docs/02-viewer-psychology.md) — the 3-step click loop + the 7 visual stun gun elements
-- [03 Desire Loops](./docs/03-desire-loops.md) — how to frame what the thumbnail promises
-- [04 Composition](./docs/04-composition.md) — symmetrical, rule-of-thirds, A→B split
-- [05 Iteration Process](./docs/05-iteration-process.md) — how to iterate fast + the feedback translation table
-- [06 Case Studies](./docs/06-case-studies.md) — the Fazio format, why it converts, when to use it
+- [SOP.md](./SOP.md) — the complete step-by-step workflow
+- [docs/01-design-system.md](./docs/01-design-system.md) — the hard rules (fonts, banners, face, labels, upscale)
+- [docs/02-viewer-psychology.md](./docs/02-viewer-psychology.md) — the 3-step click loop + the 7 visual stun gun elements
+- [docs/03-desire-loops.md](./docs/03-desire-loops.md) — how to frame what the thumbnail promises
+- [docs/04-composition.md](./docs/04-composition.md) — symmetrical, rule-of-thirds, A→B split
+- [docs/05-iteration-process.md](./docs/05-iteration-process.md) — how to iterate fast + the feedback translation table
+- [docs/06-case-studies.md](./docs/06-case-studies.md) — the Fazio format, why it converts, when to use it
 
 ## Hard rules (the short version)
 
-- Single solid banner headline, not two split colours (case study is the exception).
-- SF Pro Heavy weight (between Bold and Black).
+- Single solid banner headline, not two split colours (case study is the exception)
+- SF Pro Heavy weight (between Bold and Black)
 - Real correctly-spelled words on any whiteboard or graphic content. Never let Gemini invent labels.
-- Face large: 35-40% of vertical height, y=15-55%.
-- Mouth closed unless the source photo shows otherwise.
-- Pose matches the source brand picture, don't force a new pose.
-- PIL overlay for all text, never Gemini-rendered headlines.
-- Upscale to 1920x1080 with LANCZOS + UnsharpMask.
-- For case studies: use interview stills, never Gemini-generated faces.
+- Face large: 35-40% of vertical height, y=15-55%
+- Mouth closed unless the source photo shows otherwise
+- Pose matches the source brand picture, don't force a new pose
+- PIL overlay for all text, never Gemini-rendered headlines
+- Upscale to 1920x1080 with LANCZOS + UnsharpMask
+- For case studies: use interview stills, never Gemini-generated faces
 
 ## Iteration translation table
 
@@ -173,9 +222,15 @@ When your collaborator says X, change Y:
 | doesn't pop | check the banner colour contrasts the background |
 | give me variations | spawn 3-4 parallel runs, don't describe options in text |
 
-## Background
+## Use as a Claude Code skill
 
-The architecture pattern (markdown instructions + Python scripts + self-contained folder) is Tyler Germain's invention for the [Claude Code skills system](https://claude.com/plugins/superpowers). This project packages the same pattern as a standalone CLI repo, hardened with additional rules learned from 100+ real iterations.
+This repo doubles as a Claude Code skill. To install:
+
+```bash
+cp -r . ~/.claude/skills/youtube-thumbnail/
+```
+
+Then type `/youtube-thumbnail` in Claude Code. Claude reads `SKILL.md` and walks you through the pipeline using the same scripts.
 
 ## License
 
